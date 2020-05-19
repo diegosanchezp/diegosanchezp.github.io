@@ -1,1 +1,0 @@
-import{S as t,i as s,s as e,I as a,g as i,N as n}from"./client.4f823ab3.js";function o(t){return{c(){this.h()},l(t){a('[data-svelte="svelte-nw7d5l"]',document.head).forEach(i),this.h()},h(){document.title="Certifications | Diego Sánchez"},m:n,p:n,i:n,o:n,d:n}}export default class extends t{constructor(t){super(),s(this,t,null,o,e,{})}}
