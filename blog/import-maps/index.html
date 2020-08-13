@@ -1,0 +1,182 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Using NodeJs packages in the browser with import maps - Diego Sánchez Portfolio</title><meta name=description content="Import maps is a browser proposal that allow web pages to control the behavior of JavaScript imports, in this article will cover the usage of this feature with nodejs packages, the related problems, and posible solutions."><meta name=generator content="Hugo 0.73.0"><link rel=stylesheet href=/css/main.min.d02de740abdc4a577fba785e594989003140a6abc7de836fd3f7302802af25e4.css integrity=sha256-0C3nQKvcSld/unheWUmJADFApqvH3oNv0/cwKAKvJeQ=><script defer src=/js/bundle.min.b0bed07aac2f87b15e1a792df36cb0f1dd4facb7963b42c8a3f24fa76f22e329.js></script><link rel=stylesheet href=https://diegosanchezp.github.io/css/pages/blog.css integrity></head><body id=blog-body><aside id=sidenav class="sidenav flex flex-col p-2 md:h-full lg:h-full xl:h-full border border-solid border-lightwhite overflow-y-auto sm:overflow-x-auto"><section class="sidenav-profile flex flex-col sm:flex-row justify-center sm:justify-center"><img class="lg:w-full sm:w-16 sm:h-16 sm:rounded-sm md:w-auto xl:mb-2 lg:mb-2 md:center-block-hor" src=/Images/ProfilePic.jpg alt="Profile Picture"><div class="self-center sm:self-center md:self-center md:mt-2"><p class="text-center uppercase text-primary">Diego Sánchez</p><p class="ml-2 sm:ml-2 md:ml-2 text-center">Full Stack Web Developer</p></div></section><section class="flex flex-col sm:flex-row sm:justify-center sm:flex-wrap md:justify-center justify-center my-2"><hr><a class="font-bold
+sidebar-nav-item
+relative py-2 rounded px-2" href=/ title="Home page">Home<div class=rippleJS></div></a><hr><a class="font-bold
+sidebar-nav-item
+relative py-2 rounded px-2" href=/academics/ title="Academics page">Academics<div class=rippleJS></div></a><hr><a class="font-bold
+sidebar-nav-item
+relative py-2 rounded px-2" href=/blog/ title="Blog page">Blog<div class=rippleJS></div></a><hr><a class="font-bold
+sidebar-nav-item
+relative py-2 rounded px-2" href=/certifications/ title="Certifications page">Certifications<div class=rippleJS></div></a><hr><a class="font-bold
+sidebar-nav-item
+relative py-2 rounded px-2" href=/projects/ title="Projects page">Projects<div class=rippleJS></div></a></section><div class="sm:flex sm:justify-center"><section class="sidenav-icons flex justify-around max-w-full justify-center sm:justify-center md:justify-center"><div><img id=envelope src=/svgs/solid/envelope.svg alt=envelope-icon></div><a rel=noopener href=https://github.com/diegosanchezp/ title="Github Account" target=_blank><img src=/svgs/brands/github.svg alt=github-icon></a>
+<a rel=noopener href=https://github.com/diegosanchezp/ title="LinkedIn Profile" target=_blank><img src=/svgs/brands/linkedin.svg alt=linkedin-icon></a></section><section class=sm:ml-3></section></div><dialog id=email-dialog class="bg-primary text-black"><p>Send me an email at</p><p class="text-center text-bold">diegosandmg@gmail.com</p><div class="flex justify-end"><button id=close-email-dialog class="btn-yellow relative hover:bg-secondary hover:text-primary">
+Ok<div class=rippleJS></div></button></div></dialog></aside><section id=post-title class=smmd:p-2><h1>Using NodeJs packages in the browser with import maps</h1><time datetime="2020-08-12 00:00:00 +0000 UTC">August 12, 2020</time><div class="flex my-2"><a href=/categories/web-development/ class="border bord-white p-1 font-bold capitalize border-solid mr-2">Web development</a></div></section><main id=post-content class="xl:text-xl lg:text-lg md:text-lg smmd:p-2"><h2 id=what-are-import-maps>What are import maps</h2><p>Import maps is a browser proposal that allow web pages to control the behavior of JavaScript imports, in other words control over what URLs get fetched by JavaScript <code>import</code> statements and <code>import()</code> expressions.
+A NodeJs developer is used to import packages this way</p><div class="code-center flex justify-center"><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-js data-lang=js><span style=color:#66d9ef>import</span> { <span style=color:#a6e22e>html</span> } <span style=color:#a6e22e>from</span> <span style=color:#e6db74>&#39;lit-element&#39;</span>;
+</code></pre></div></div><p>If we tried to do that directly in the browser it will fail, throwing an error similar to</p><p class="text-center code-color">Uncaught TypeError: Failed to resolve module specifier "lit-element". Relative references must start with either "/", "./", or "../".</p><p>This is happens because the specified path (&lsquo;lit-element&rsquo;) is &lsquo;bare&rsquo;, meaning that is not the full path to the file where the source code of that object is.</p><p>There is also the problem that if we gave the full path of the file, that file could also be importing another package in the same way, with a bare path.</p><p>The typical workaround for this problem is to use a bundler like Rollup or Webpack that resolves all of the paths. And puts all of the required code into one single file.</p><p>There is the exception of packages that have <strong>zero dependencies</strong> (meaning that they simply do not import from another packages), they do things like relative imports, for example,<code>import { defaultTemplateProcessor } from './lib/default-template-processor.js';</code> or have the so called &ldquo;dist&rdquo; files which have all of the required code in one single file.</p><p>In those cases we could do something like <code>import { foo } from './node_modules/lib-foo/file.js'</code> there will be no problems</p><p>But what if we wanted to still use the bare paths syntax, since is better and more comfortable to work with and have something that tells that a bare path points to a full path. That&rsquo;s exactly what import maps does!</p><p>Quoting from the specification on <a class=a-markdown href=https://www.chromestatus.com/feature/5315286962012160 title="Import maps - chromestatus.com" target=_blank rel=noopener>chromestatus</a></p><p>" Until import maps, the web has had no native ability to do this kind of mapping (although the specification has included a carveout for it since modules were first introduced). Import maps bring this ability to the web&rsquo;s native module system, putting it on parity with web developer expectations. "</p><h2 id=using-import-maps>Using import maps</h2><p>Currently import maps are a experimental feature, the only browser that has implemented it is google-chrome, so, to start using them we have two methods</p><ol><li>Enable import maps on google-chrome by putting in the address bar the url <code>chrome://flags/</code>, then search for import maps in the search bar and enable the flag &ldquo;Experimental Productivity Features&rdquo;.</li></ol><figure><img src=/blog/import-maps/chrome-experimental-importmap-min.png alt="Chrome flag Experimental Productivity Features image"><figcaption><h4>Chrome flag Experimental Productivity Features</h4></figcaption></figure><ol start=2><li>Use a polyfill, in this moment there are two,<a class=a-markdown href=https://github.com/guybedford/es-module-shims target=_blank rel=noopener>
+es-module-shims</a>
+and <a class=a-markdown href=https://github.com/systemjs/systemjs target=_blank rel=noopener>SystemJS</a>
+for the following example I&rsquo;ll be using the first one.</li></ol><p>Let&rsquo;s begin setting up the example by installing the required dependencies</p><ul><li><code>es-dev-server</code> we are going to need a server because the polyfill uses the fetch api.</li><li><code>es-module-shims</code> the polyfill that&rsquo;s going to do the import magic</li><li><code>lit-element</code> the dependency that uses the npm system</li></ul><p>Install the dependencies with yarn only, we&rsquo;ll need the generated <code>yarn.lock</code> file for later.</p><p><code>yarn add es-dev-server -D</code></p><p><code>yarn add es-module-shims lit-element</code></p><p>Then we are going to craft the html file which will have the import map and the javascript code that uses imports with the bare syntax</p><p>Make an html file that requires the lit-html dependency</p><div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=color:#75715e>&lt;!-- index.html --&gt;</span>
+&lt;<span style=color:#f92672>html</span>&gt;
+  &lt;<span style=color:#f92672>head</span>&gt;
+    &lt;<span style=color:#f92672>title</span>&gt;ES Import Maps Shim&lt;/<span style=color:#f92672>title</span>&gt;
+    <span style=color:#75715e>&lt;!-- Include the polyfill --&gt;</span>
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>defer</span> <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;./node_modules/es-module-shims/dist/es-module-shims.min.js&#34;</span>&gt;&lt;/<span style=color:#f92672>script</span>&gt;
+
+    <span style=color:#75715e>&lt;!-- Declare the import map wich is a json object that starts with the key &#34;imports&#34;. 
+</span><span style=color:#75715e>    This is an object that contains the mapping of the import URLs to the node_modules folder --&gt;</span>
+
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>type</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;importmap-shim&#34;</span>&gt;
+      {
+        <span style=color:#e6db74>&#34;imports&#34;</span><span style=color:#f92672>:</span> {
+          <span style=color:#e6db74>&#34;lit-html&#34;</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;./node_modules/lit-html/lit-html.js&#34;</span>,
+          <span style=color:#e6db74>&#34;lit-element&#34;</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;./node_modules/lit-element/lit-element.js&#34;</span>,
+          <span style=color:#e6db74>&#34;lit-html/lit-html.js&#34;</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;./node_modules/lit-html/lit-html.js&#34;</span>,
+          <span style=color:#e6db74>&#34;lit-html/lib/shady-render.js&#34;</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;./node_modules/lit-html/lib/shady-render.js&#34;</span>
+        }
+      }
+    &lt;/<span style=color:#f92672>script</span>&gt;
+
+    <span style=color:#75715e>&lt;!-- JavaScript code that uses bare module syntax --&gt;</span>
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>type</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;module-shim&#34;</span>&gt;
+
+      <span style=color:#66d9ef>import</span> { <span style=color:#a6e22e>LitElement</span>, <span style=color:#a6e22e>html</span>, <span style=color:#a6e22e>css</span> } <span style=color:#a6e22e>from</span> <span style=color:#e6db74>&#39;lit-element&#39;</span>;
+
+      <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CustomBtn</span> <span style=color:#66d9ef>extends</span> <span style=color:#a6e22e>LitElement</span> {
+        <span style=color:#66d9ef>static</span> <span style=color:#a6e22e>get</span> <span style=color:#a6e22e>styles</span>() {
+          <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>css</span><span style=color:#e6db74>`
+</span><span style=color:#e6db74>            button {
+</span><span style=color:#e6db74>              color: blue;
+</span><span style=color:#e6db74>            }
+</span><span style=color:#e6db74>          `</span>;
+        }
+
+        <span style=color:#a6e22e>render</span>() {
+          <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>html</span><span style=color:#e6db74>`
+</span><span style=color:#e6db74>            &lt;button&gt;Custom Button&lt;/button&gt;
+</span><span style=color:#e6db74>          `</span>;
+        }
+      }
+      <span style=color:#a6e22e>customElements</span>.<span style=color:#a6e22e>define</span>(<span style=color:#e6db74>&#39;custom-button&#39;</span>, <span style=color:#a6e22e>CustomBtn</span>);
+    &lt;/<span style=color:#f92672>script</span>&gt;
+  &lt;/<span style=color:#f92672>head</span>&gt;
+  &lt;<span style=color:#f92672>body</span>&gt;
+    &lt;<span style=color:#f92672>custom-button</span>&gt;&lt;/<span style=color:#f92672>custom-button</span>&gt;
+  &lt;/<span style=color:#f92672>body</span>&gt;
+&lt;/<span style=color:#f92672>html</span>&gt;</code></pre></td></tr></table></div></div><p>Next serve the html file</p><p><code>npx es-dev-server --app-index index.html --watch --open</code></p><figure><img src=/blog/index.png alt="index screenshot"><figcaption><h4>Index page with custom button</h4></figcaption></figure><p>Let&rsquo;s explain some things about the example.</p><ul><li><p>We are making a simple web component with LitElement base class.</p></li><li><p>The import map makes the bare path in line 25 to be resolved to <code>import { LitElement, html, css } from './node_modules/lit-element/lit-element.js';</code>. It does the same for the internal imports of <code>lit-element</code>.</p></li><li><p>If you are using chrome with the enabled flag “Experimental Productivity Features”. You don&rsquo;t need line 6, change line 11 to <code>&lt;script type="importmap">&lt;/script></code> and line 23 to <code>&lt;script type="module">&lt;/script></code>.</p></li></ul><p>There is still one thing you might be asking. How did you know how to list those other imports ? If you are only importing lit-element. Well that&rsquo;s one thing we have to take care about, the internal imports of lit-element, doing this by hand might be a huge pain, the import map you see above took me a few minutes to setup, I&rsquo;ve had to analyze the <code>package.json</code> of <code>lit-element</code> and <code>lit-html</code> since the first one is dependent on the last one. Even the import map that I&rsquo;ve provided could fail for others imports of lit-html.</p><p>So the ideal is to have something more robust, a tool that automatically generates the import map for ourselves.</p><h3 id=generating-import-maps>Generating import maps</h3><p>We&rsquo;ll use the package <a class=a-markdown href=https://www.npmjs.com/package/@import-maps/generate target=_blank rel=noopener>@import-maps/generate</a>
+to generate the import map. The caveats are that it only supports <code>yarn.lock</code> file ( this is why the dependencies must have be installed only with yarn at the beginning ) and that Windows paths are not supported.</p><p>Install @import-maps/generate as a development dependency</p><p><code>yarn add @import-maps/generate -D</code></p><p>To generate the import map run the command</p><p><code>npx @import-map/generate</code></p><p>This will output the importmap in a file named <code>import-map.json</code>, below is an example</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{
+  <span style=color:#f92672>&#34;imports&#34;</span>: {
+    <span style=color:#f92672>&#34;es-module-shims/&#34;</span>: <span style=color:#e6db74>&#34;/node_modules/es-module-shims/dist/&#34;</span>,
+    <span style=color:#f92672>&#34;lit-element&#34;</span>: <span style=color:#e6db74>&#34;/node_modules/lit-element/lit-element.js&#34;</span>,
+    <span style=color:#f92672>&#34;lit-element/&#34;</span>: <span style=color:#e6db74>&#34;/node_modules/lit-element/&#34;</span>,
+    <span style=color:#f92672>&#34;lit-html&#34;</span>: <span style=color:#e6db74>&#34;/node_modules/lit-html/lit-html.js&#34;</span>,
+    <span style=color:#f92672>&#34;lit-html/&#34;</span>: <span style=color:#e6db74>&#34;/node_modules/lit-html/&#34;</span>
+  }
+}
+</code></pre></div><p>Ideally you&rsquo;ll want to generate the import map after installing any additional dependency, to do so add to <code>package.json</code> a post install script</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=color:#e6db74>&#34;scripts&#34;</span><span style=color:#960050;background-color:#1e0010>:</span> {
+  <span style=color:#f92672>&#34;postinstall&#34;</span>: <span style=color:#e6db74>&#34;generate-import-map&#34;</span>
+}
+</code></pre></div><p>Lastly include the import map by replacing line 11 on the index.html file used before.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=color:#75715e>&lt;!-- index.html --&gt;</span>
+&lt;<span style=color:#f92672>html</span>&gt;
+  &lt;<span style=color:#f92672>head</span>&gt;
+    &lt;<span style=color:#f92672>title</span>&gt;ES Import Maps Shim&lt;/<span style=color:#f92672>title</span>&gt;
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>defer</span> <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;./node_modules/es-module-shims/dist/es-module-shims.min.js&#34;</span>&gt;&lt;/<span style=color:#f92672>script</span>&gt;
+
+    <span style=color:#75715e>&lt;!-- Generated import map --&gt;</span>
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>type</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;importmap-shim&#34;</span> <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;import-map.json&#34;</span>&gt;&lt;/<span style=color:#f92672>script</span>&gt;
+    <span style=color:#75715e>&lt;!-- ... --&gt;</span>
+  
+  &lt;/<span style=color:#f92672>head</span>&gt;
+  &lt;<span style=color:#f92672>body</span>&gt;
+    &lt;<span style=color:#f92672>x-component</span>&gt;&lt;/<span style=color:#f92672>x-component</span>&gt;
+  &lt;/<span style=color:#f92672>body</span>&gt;
+&lt;/<span style=color:#f92672>html</span>&gt;
+</code></pre></div><h2 id=the-problem-of-nodejs-packages>The problem of NodeJs packages</h2><p>Some NodeJs packages might not be compatible with the browser, back before the <code>import/export</code> (ESM modules) syntax, <code>require()</code> (CommonJS) was used instead. There is a chance that some package uses a dependency that uses the old syntax making it unusable in the browser since it only understands <code>import/export</code>. The solution to the problem would be to simply convert the old syntax to the new one, there is a tool that does that automatically <a class=a-markdown href=https://www.snowpack.dev/ title="Snowpack Website" target=_blank rel=noopener>Snowpack</a>
+, the next example is about it.</p><p>The reason why I choose the lit-element package was because it&rsquo;s ESM ready, thus avoiding the problem described above.</p><p>For the example that covers this topic will continue using web components, instead of making one we will download the paper-button from <a class=a-markdown href=https://www.npmjs.com/package/@polymer/paper-button target=_blank rel=noopener>@polymer</a>
+. The characteristic of this is that it&rsquo;s not declared as an ESM module. If you inspect the <code>node_modules/@polymer/paper-button/package.json</code> it has no <strong>&ldquo;module&rdquo;</strong> field, even do the file main file uses <code>import</code> syntax.</p><p>Running the generator from the last example, will trow an exception</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#f92672>(</span>node:10621<span style=color:#f92672>)</span> UnhandledPromiseRejectionWarning: Error: Cannot find module <span style=color:#e6db74>&#39;@polymer/iron-behaviors&#39;</span>
+</code></pre></div><p>I&rsquo;ve inspect the <code>package.json</code> of &lsquo;iron-behaviors&rsquo; and didn&rsquo;t find the &ldquo;main&rdquo; field. Which is probably what&rsquo;s causing problems.</p><p>Back to Snowpack, it acts as a middleware or intermediary between the dependencies stored in the <code>node_modules</code> folder and the web browser making these fully compatible. Takes as input a <code>.js</code> file declared as main in <code>package.json</code>, analyzes the declared imports and outputs a <code>web_modules</code> folder with bundled javascript files and the respective import map.</p><p>To start the example install snowpack</p><p><code>yarn add snowpack -D</code></p><p>And the component</p><p><code>yarn add @polymer/paper-button</code></p><p>Create a new <code>snowpack.html</code> file</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=color:#75715e>&lt;!-- snowpack.html --&gt;</span>
+&lt;<span style=color:#f92672>html</span>&gt;
+  &lt;<span style=color:#f92672>head</span>&gt;
+    &lt;<span style=color:#f92672>title</span>&gt;Import Maps with Snowpack&lt;/<span style=color:#f92672>title</span>&gt;
+
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>defer</span> <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;./node_modules/es-module-shims/dist/es-module-shims.min.js&#34;</span>&gt;&lt;/<span style=color:#f92672>script</span>&gt;
+
+    <span style=color:#75715e>&lt;!-- Import map is located in the web_modules folder --&gt;</span>
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>type</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;importmap-shim&#34;</span> <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;./web_modules/import-map.json&#34;</span>&gt;&lt;/<span style=color:#f92672>script</span>&gt;
+    
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>type</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;module-shim&#34;</span> <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;main.js&#34;</span>&gt;&lt;/<span style=color:#f92672>script</span>&gt;
+  &lt;/<span style=color:#f92672>head</span>&gt;
+
+  &lt;<span style=color:#f92672>body</span>&gt;
+    &lt;<span style=color:#f92672>paper-button</span> <span style=color:#a6e22e>raised</span>&gt;Another Button&lt;/<span style=color:#f92672>paper-button</span>&gt;
+  &lt;/<span style=color:#f92672>body</span>&gt;
+</code></pre></div><p>Create <code>main.js</code> file, inside this file import the paper-button</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-js data-lang=js><span style=color:#66d9ef>import</span> <span style=color:#e6db74>&#39;@polymer/paper-button/paper-button.js&#39;</span>;
+</code></pre></div><p>Update your <code>package.json</code> main field</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{
+  <span style=color:#f92672>&#34;main&#34;</span>: <span style=color:#e6db74>&#34;main.js&#34;</span>
+}
+</code></pre></div><p>Run the command to generate the web_modules folder</p><p><code>npx snowpack</code></p><p>If you inspect the <code>web_modules</code> folder there is one single js file per dependency</p><div class="code-center flex justify-center"><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>web_modules/
+├── import-map.json
+├── lit-element.js
+└── @polymer
+    └── paper-button
+        └── paper-button.js</code></pre></div></div><p>If some of the dependencies share a common dependency they will be put in a common folder.</p><p>Like the last generator you&rsquo;ll want to update the <code>import-map.json</code> every time a dependency is added, to do so, add to <code>package.json</code> a postinstall script.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=color:#e6db74>&#34;scripts&#34;</span><span style=color:#960050;background-color:#1e0010>:</span> {
+  <span style=color:#f92672>&#34;postinstall&#34;</span>: <span style=color:#e6db74>&#34;snowpack&#34;</span>
+}
+</code></pre></div><p>Run the server
+<code>npx es-dev-server --app-index snowpack.html --watch --open</code></p><p>You should see a blank page with a button</p><figure><img src=/blog/snowpack.png alt="snowpack page"><figcaption><h4>Snowpack page with paper button</h4></figcaption></figure><h2 id=conclusion>Conclusion</h2><p>Import maps is a great proposal that enhances the development workflow and makes a bridge between the npm ecosystem and the browser, sadly is not all pretty, there is compatibility problems between the import system that uses the browser ESM and the one that nodejs used in the past commonJS, snowpack has provided a way to breach into this problem.</p><p>The one thing that I personally don&rsquo;t Like about snowpack is that is that there will be duplication of code, the node_modules and web_modules folder are similar.</p><h2 id=additional-notes>Additional notes</h2><p>Check out the <a class=a-markdown href=https://github.com/diegosanchezp/import-maps-examples target=_blank rel=noopener>github source code repository</a>
+with all the examples included!</p><p>Snowpack and the polyfill es-module-shim can do much more than the examples provided here. I encourage you to checkout their documentation.</p><p>You can check the progress of the import maps on <a class=a-markdown href=https://www.chromestatus.com/feature/5315286962012160 title="Import maps - chromestatus.com" target=_blank rel=noopener>chromestatus.com</a></p><p>Import maps can also be used with <a class=a-markdown href=https://unpkg.com/ target=_blank rel=noopener>unpkg</a>
+content delivery network. The bare syntax can be mapped to an unpkg url,<a class=a-markdown href=https://deno.land/manual/linking_to_external_code/import_maps target=_blank rel=noopener>
+Deno</a>
+uses import maps to do something similar. You can even use unpkg urls as a fallback in case a module is not available in the node_modules folder.</p><h2 id=references>References</h2><p><a class=a-markdown href=https://www.snowpack.dev/ title="Snowpack Website" target=_blank rel=noopener>Snowpack</a></p><p><a class=a-markdown href=https://www.chromestatus.com/feature/5315286962012160 title="Import maps - chromestatus.com" target=_blank rel=noopener>Import maps - chromestatus.com</a></p><p><a class=a-markdown href=https://github.com/WICG/import-maps target=_blank rel=noopener>Import maps - Editor&rsquo;s draft</a></p><p><a class=a-markdown href=https://wicg.github.io/import-maps/ target=_blank rel=noopener>Import Maps Draft Community Group Report</a></p></main><aside id=tableofcontents><b>Table of contents</b><nav id=TableOfContents><ul><li><a href=#what-are-import-maps>What are import maps</a></li><li><a href=#using-import-maps>Using import maps</a><ul><li><a href=#generating-import-maps>Generating import maps</a></li></ul></li><li><a href=#the-problem-of-nodejs-packages>The problem of NodeJs packages</a></li><li><a href=#conclusion>Conclusion</a></li><li><a href=#additional-notes>Additional notes</a></li><li><a href=#references>References</a></li></ul></nav></aside><nav id=quick-nav class=bg-primary><button>
+<a href=#post-content>Begining</a></button>
+<button>
+<a href=#tableofcontents>TableOfContents</a></button>
+<button>
+<a href=#sidenav>Sidenav</a></button></nav></body></html>
