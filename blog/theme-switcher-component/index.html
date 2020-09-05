@@ -1,0 +1,58 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=color-scheme content="dark"><meta name=viewport content="width=device-width,initial-scale=1"><title>Binary theme switcher component - Diego Sánchez Portfolio</title><meta name=description content="A web component that helps you implement and change two themes on a web page."><meta property="og:description" content="A web component that helps you implement and change two themes on a web page."><meta name=author content="Diego Sánchez"><meta name=generator content="Hugo 0.74.3"><meta property="og:title" content="Binary theme switcher component"><meta property="og:url" content="https://diegosanchezp.github.io/blog/theme-switcher-component/"><meta property="og:type" content="article"><meta property="og:image" content="https://diegosanchezp.github.io/blog/theme-switcher-component/theme-switcher-cover.png"><meta property="og:image:alt" content="demo theme switcher"><meta property="twitter:image:alt" content="demo theme switcher"><link rel=stylesheet href=/css/main.min.9e13f9bd94ec17a1ebe82e04b7e9636bfb44d0cdbbd730ede9cf7443f64c380d.css integrity=sha256-nhP5vZTsF6Hr6C4Et+lja/tE0M271zDt6c90Q/ZMOA0=><script defer src=/js/bundle.min.b0bed07aac2f87b15e1a792df36cb0f1dd4facb7963b42c8a3f24fa76f22e329.js></script><link rel=stylesheet href=https://diegosanchezp.github.io/css/pages/blog.min.0c04431c26a0c9262c13402bfd7fcf9602ec8b2d39babbec760d50d9c97804b7.css integrity=sha256-DARDHCagySYsE0Ar/X/PlgLsiy05urvsdg1Q2cl4BLc=></head><body id=blog-body><aside id=sidenav class="sidenav flex flex-col p-2 md:h-full lg:h-full xl:h-full border border-solid border-lightwhite overflow-y-auto sm:overflow-x-auto"><section class="sidenav-profile flex flex-col sm:flex-row justify-center sm:justify-center"><img class="lg:w-full sm:w-16 sm:h-16 sm:rounded-sm md:w-auto xl:mb-2 lg:mb-2 md:center-block-hor" src=/Images/ProfilePic.jpg alt="Profile Picture"><div class="self-center sm:self-center md:self-center md:mt-2"><p class="text-center uppercase text-primary">Diego Sánchez</p><p class="ml-2 sm:ml-2 md:ml-2 text-center">Full Stack Web Developer</p></div></section><section class="flex flex-col sm:flex-row sm:justify-center sm:flex-wrap md:justify-center justify-center my-2"><hr><a class="font-medium
+sidebar-nav-item
+relative py-2 rounded px-2" href=/ title="Home page">Home<div class=rippleJS></div></a><hr><a class="font-medium
+sidebar-nav-item
+relative py-2 rounded px-2" href=/academics/ title="Academics page">Academics<div class=rippleJS></div></a><hr><a class="font-medium
+sidebar-nav-item
+relative py-2 rounded px-2" href=/blog/ title="Blog page">Blog<div class=rippleJS></div></a><hr><a class="font-medium
+sidebar-nav-item
+relative py-2 rounded px-2" href=/certifications/ title="Certifications page">Certifications<div class=rippleJS></div></a><hr><a class="font-medium
+sidebar-nav-item
+relative py-2 rounded px-2" href=/projects/ title="Projects page">Projects<div class=rippleJS></div></a></section><div class="sm:flex sm:justify-center"><section class="sidenav-icons flex justify-around max-w-full justify-center sm:justify-center md:justify-center"><div><img id=envelope src=/svgs/solid/envelope.svg alt=envelope-icon></div><a rel=noopener href=https://github.com/diegosanchezp/ title="Github Account" target=_blank><img src=/svgs/brands/github.svg alt=github-icon></a>
+<a rel=noopener href=https://github.com/diegosanchezp/ title="LinkedIn Profile" target=_blank><img src=/svgs/brands/linkedin.svg alt=linkedin-icon></a></section><section class=sm:ml-3></section></div><dialog id=email-dialog class="bg-primary text-black"><p>Send me an email at</p><p class="text-center text-bold">diegosandmg@gmail.com</p><div class="flex justify-end"><button id=close-email-dialog class="btn-yellow relative hover:bg-secondary hover:text-primary">
+Ok<div class=rippleJS></div></button></div></dialog></aside><section id=post-title class=smmd:p-2><h1 class=sm:text-center>Binary theme switcher component</h1><time datetime="2020-09-05 12:27:59 -0400 -04">September 5, 2020</time><div class="flex my-2"><a href=/categories/web-development/ class="border bord-white p-1 font-bold capitalize border-solid mr-2">Web development</a></div></section><main id=post-content class="xl:text-xl lg:text-lg md:text-lg smmd:p-2"><h2 id=introduction>Introduction</h2><p>A lot of websites nowadays have this feature of having two color schemes for the user to choose, namely &ldquo;dark&rdquo; and &ldquo;light&rdquo;, implementing this is a peace of cake with the help of CSS custom properties (variables) and a bit of ECMAscript. Today I present you a web component that abstracts the ECMAscript part and lets you switch between the themes dynamically.</p><p>Using the component is straightforward. The component adds and updates a data attribute &ldquo;data-theme&rdquo; to the body element which you can handle in CSS via attribute selectors, so depending on the theme you have you can update your theme variables.</p><p>See a <a class=a-markdown href=https://diegosanchezp.github.io/theme-switcher-component target=_blank rel=noopener>live demo</a>
+before using it.</p><h2 id=usage-example>Usage example</h2><p>To install it use your preferred package manager.</p><p><code>npm install theme-switcher-component</code></p><p>OR</p><p><code>yarn add theme-switcher-component</code></p><p>In a .html file include and declare the component.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&lt;<span style=color:#f92672>html</span> <span style=color:#a6e22e>lang</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;en&#34;</span>&gt;
+  &lt;<span style=color:#f92672>head</span>&gt;
+    &lt;<span style=color:#f92672>meta</span> <span style=color:#a6e22e>charset</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;utf-8&#34;</span>&gt;
+    &lt;<span style=color:#f92672>title</span>&gt;Theme switcher component demo&lt;/<span style=color:#f92672>title</span>&gt; 
+    &lt;<span style=color:#f92672>link</span> <span style=color:#a6e22e>rel</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;stylesheet&#34;</span> <span style=color:#a6e22e>href</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;./styles.css&#34;</span>&gt;
+    <span style=color:#75715e>&lt;!-- Include the component --&gt;</span>
+    &lt;<span style=color:#f92672>script</span> <span style=color:#a6e22e>type</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;module&#34;</span> <span style=color:#a6e22e>src</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;./node_modules/theme-switcher-component/switch.js&#34;</span> <span style=color:#a6e22e>defer</span>&gt;&lt;/<span style=color:#f92672>script</span>&gt;
+  &lt;/<span style=color:#f92672>head</span>&gt;
+
+  &lt;<span style=color:#f92672>body</span>&gt;
+    
+    &lt;<span style=color:#f92672>main</span>&gt;
+      &lt;<span style=color:#f92672>section</span>&gt;
+        &lt;<span style=color:#f92672>p</span>&gt;Components are not applications, they are just a part of the whole.&lt;/<span style=color:#f92672>p</span>&gt;
+        <span style=color:#75715e>&lt;!-- Declare the component --&gt;</span>
+        <span style=color:#75715e>&lt;!-- The first element of the array themes defines the default theme --&gt;</span>
+        &lt;<span style=color:#f92672>theme-switcher</span> <span style=color:#a6e22e>themes</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#39;[&#34;light&#34;, &#34;dark&#34;]&#39;</span> <span style=color:#a6e22e>verbose</span> <span style=color:#a6e22e>title</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;switch themes&#34;</span>&gt;&lt;/<span style=color:#f92672>theme-switcher</span>&gt;
+      &lt;/<span style=color:#f92672>section</span>&gt;
+    &lt;/<span style=color:#f92672>main</span>&gt;
+
+  &lt;/<span style=color:#f92672>body</span>&gt;
+&lt;/<span style=color:#f92672>html</span>&gt;
+</code></pre></div><p>Note: other names rather than the typical &ldquo;light&rdquo; and &ldquo;dark&rdquo; can be defined for example &ldquo;solarized&rdquo; and &ldquo;tango&rdquo;.</p><p>In a .css file declare in the root selector the css variables to use and change their values accordingly to the two themes defined selecting the body.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-css data-lang=css><span style=color:#75715e>/* Define a theme with variables */</span>
+:<span style=color:#a6e22e>root</span> {
+  <span style=color:#75715e>/* Light theme the default*/</span>
+  --border-color: <span style=color:#66d9ef>black</span>;
+  --bg-color: <span style=color:#66d9ef>white</span>;
+}
+
+<span style=color:#75715e>/* Change variables values accordingly*/</span>
+
+<span style=color:#f92672>body</span><span style=color:#f92672>[</span><span style=color:#f92672>data-theme</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;dark&#34;</span><span style=color:#f92672>]</span>{
+  --border-color: <span style=color:#66d9ef>white</span>;
+  --bg-color: <span style=color:#66d9ef>black</span>;
+}
+
+<span style=color:#75715e>/* ... More CSS rules below ... */</span>
+</code></pre></div><p>After a theme is changed, it gets stored to <code>localStorage</code>, if you want to see values of the local store and the current theme set the <code>verbose</code> attribute to the custom element, like the example.</p><p>That&rsquo;s it ! Hope this helps you.</p><p>If you want more in depth documentation check the <a class=a-markdown href=https://github.com/diegosanchezp/theme-switcher-component/ target=_blank rel=noopener>github repository</a>
+and the <a class=a-markdown href=https://github.com/diegosanchezp/theme-switcher-component/tree/master/demo target=_blank rel=noopener>live demo code</a>
+.</p></main><aside id=tableofcontents><b>Table of contents</b><nav id=TableOfContents><ul><li><a href=#introduction>Introduction</a></li><li><a href=#usage-example>Usage example</a></li></ul></nav></aside><nav id=quick-nav class=bg-primary><button>
+<a href=#post-content>Begining</a></button>
+<button>
+<a href=#tableofcontents>TableOfContents</a></button>
+<button>
+<a href=#sidenav>Sidenav</a></button></nav></body></html>
