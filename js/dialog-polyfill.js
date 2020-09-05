@@ -2,7 +2,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.dialogPolyfill = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   // nb. This is for IE10 and lower _only_.
   var supportCustomEvent = window.CustomEvent;
@@ -14,6 +14,22 @@
       return ev;
     };
     supportCustomEvent.prototype = window.Event.prototype;
+  }
+
+  /**
+   * Dispatches the passed event to both an "on<type>" handler as well as via the
+   * normal dispatch operation. Does not bubble.
+   *
+   * @param {!EventTarget} target
+   * @param {!Event} event
+   * @return {boolean}
+   */
+  function safeDispatchEvent(target, event) {
+    var check = 'on' + event.type.toLowerCase();
+    if (typeof target[check] === 'function') {
+      target[check](event);
+    }
+    return target.dispatchEvent(event);
   }
 
   /**
@@ -199,7 +215,9 @@
 
     this.backdrop_ = document.createElement('div');
     this.backdrop_.className = 'backdrop';
-    this.backdrop_.addEventListener('click', this.backdropClick_.bind(this));
+    this.backdrop_.addEventListener('mouseup'  , this.backdropMouseEvent_.bind(this));
+    this.backdrop_.addEventListener('mousedown', this.backdropMouseEvent_.bind(this));
+    this.backdrop_.addEventListener('click'    , this.backdropMouseEvent_.bind(this));
   }
 
   dialogPolyfillInfo.prototype = /** @type {HTMLDialogElement.prototype} */ ({
@@ -252,12 +270,12 @@
     },
 
     /**
-     * Handles clicks on the fake .backdrop element, redirecting them as if
+     * Handles mouse events ('mouseup', 'mousedown', 'click') on the fake .backdrop element, redirecting them as if
      * they were on the dialog itself.
      *
      * @param {!Event} e to redirect
      */
-    backdropClick_: function(e) {
+    backdropMouseEvent_: function(e) {
       if (!this.dialog_.hasAttribute('tabindex')) {
         // Clicking on the backdrop should move the implicit cursor, even if dialog cannot be
         // focused. Create a fake thing to focus on. If the backdrop was _before_ the dialog, this
@@ -380,7 +398,7 @@
         bubbles: false,
         cancelable: false
       });
-      this.dialog_.dispatchEvent(closeEvent);
+      safeDispatchEvent(this.dialog_, closeEvent);
     }
 
   });
@@ -570,24 +588,26 @@
   };
 
   dialogPolyfill.DialogManager.prototype.handleFocus_ = function(event) {
-    if (this.containedByTopDialog_(event.target)) { return; }
+    var target = event.composedPath ? event.composedPath()[0] : event.target;
+
+    if (this.containedByTopDialog_(target)) { return; }
 
     if (document.activeElement === document.documentElement) { return; }
 
     event.preventDefault();
     event.stopPropagation();
-    safeBlur(/** @type {Element} */ (event.target));
+    safeBlur(/** @type {Element} */ (target));
 
     if (this.forwardTab_ === undefined) { return; }  // move focus only from a tab key
 
     var dpi = this.pendingDialogStack[0];
     var dialog = dpi.dialog;
-    var position = dialog.compareDocumentPosition(event.target);
+    var position = dialog.compareDocumentPosition(target);
     if (position & Node.DOCUMENT_POSITION_PRECEDING) {
       if (this.forwardTab_) {
         // forward
         dpi.focus_();
-      } else if (event.target !== document.documentElement) {
+      } else if (target !== document.documentElement) {
         // backwards if we're not already focused on <html>
         document.documentElement.focus();
       }
@@ -606,7 +626,7 @@
         cancelable: true
       });
       var dpi = this.pendingDialogStack[0];
-      if (dpi && dpi.dialog.dispatchEvent(cancelEvent)) {
+      if (dpi && safeDispatchEvent(dpi.dialog, cancelEvent)) {
         dpi.dialog.close();
       }
     } else if (event.keyCode === 9) {
@@ -774,4 +794,4 @@
 
   return dialogPolyfill;
 
-}));
+})));
